@@ -1,0 +1,23 @@
+{
+  "name": "demo1",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "easy-single-promise": "0.0.7",
+    "sass": "^1.68.0",
+    "scss": "^0.2.4",
+    "vue": "^3.3.4"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.23.0",
+    "@babel/preset-env": "^7.22.20",
+    "@vitejs/plugin-vue": "^4.2.3",
+    "require-context.macro": "^1.2.2",
+    "vite": "^4.4.6"
+  }
+}
