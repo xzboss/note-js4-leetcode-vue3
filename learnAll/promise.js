@@ -11,7 +11,11 @@ class MyPromise {
   rejectCallback = []
 
   constructor(executor) {
-    executor(this.resolve, this.reject)
+    try {
+      executor(this.resolve, this.reject)
+    } catch {
+      this.reject(new Error('executor err'))
+    }
   }
   resolve = (value) => {
     if (this.status === PENDING) {
@@ -35,21 +39,65 @@ class MyPromise {
     const innerP = new MyPromise((resolve, reject) => {
       if (this.status === FULFILL) {
         queueMicrotask(() => {
-          this.resolvePromise(onResolved(this.value), resolve, reject)
+          try {
+            this.resolvePromise(innerP, onResolved(this.value), resolve, reject)
+          } catch {
+            reject(this.reason)
+          }
         })
       }
       if (this.status === REJECTED) {
-        onRejected(this.reason)
+        queueMicrotask(() => {
+          try {
+            this.resolvePromise(
+              innerP,
+              onRejected(this.reason),
+              resolve,
+              reject
+            )
+          } catch {
+            reject(this.reason)
+          }
+        })
       }
       if (this.status === PENDING) {
-        this.resolveCallback.push(onResolved)
-        this.rejectCallback.push(onRejected)
+        this.resolveCallback.push(() => {
+          queueMicrotask(() => {
+            try {
+              this.resolvePromise(
+                innerP,
+                onResolved(this.value),
+                resolve,
+                reject
+              )
+            } catch {
+              reject(this.reason)
+            }
+          })
+        })
+        this.rejectCallback.push(() => {
+          queueMicrotask(() => {
+            try {
+              this.resolvePromise(
+                innerP,
+                onRejected(this.reason),
+                resolve,
+                reject
+              )
+            } catch {
+              reject(this.reason)
+            }
+          })
+        })
       }
     })
     return innerP
   }
 
-  resolvePromise = (returnValue, resolve, reject) => {
+  resolvePromise = (innerP, returnValue, resolve, reject) => {
+    if (innerP === returnValue) {
+      reject(new Error('不能返回自己'))
+    }
     if (returnValue instanceof MyPromise) {
       returnValue.then(resolve, reject)
     } else {
@@ -59,13 +107,32 @@ class MyPromise {
 }
 
 const p = new MyPromise((resolve, reject) => {
-  // setTimeout(() => {
-  //   console.log('response-down')
-  //   resolve('success-value')
-  // }, 2000)
-  console.log('response-down')
-  resolve('success-value')
+  setTimeout(() => {
+    console.log('response-down')
+    resolve('success-value')
+  }, 2000)
+  // console.log('response-down')
+  // resolve('success-value')
 })
-p.then((value) => {
-  console.log('then-1', value)
-})
+p.then(
+  (value) => {
+    console.log('then-1-resolve', value)
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        resolve('testing')
+      }, 2000)
+    })
+    return 'then-1-return-resolve'
+  },
+  (reason) => {
+    console.log('then-1-reject', reason)
+    return 'then-1-return-reject'
+  }
+).then(
+  (value) => {
+    console.log('then-2-resolve', value)
+  },
+  (reason) => {
+    console.log('then-2-reject', reason)
+  }
+)
