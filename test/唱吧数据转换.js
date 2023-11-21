@@ -1,3 +1,5 @@
+// const { describe } = require('node:test')
+
 const str = `11月21日 亲亲花束(动效)  1
 11月22日  你的名字(动效)  1
 11月23日  错位时空(动效)  1
@@ -24,3 +26,4 @@ str.split('\n').forEach((item) => {
   objArr.push(obj)
 })
 console.dir(objArr)
+console.log(describe, 'hhhhh')
